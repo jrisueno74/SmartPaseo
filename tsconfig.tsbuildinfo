@@ -1,1 +1,0 @@
-{"root":["./src/App.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/components/BottomNav.tsx","./src/components/TopAppBar.tsx","./src/lib/gemini.ts","./src/lib/systemInstructions.ts","./src/pages/ChatPage.tsx","./src/pages/ProfilePage.tsx","./src/pages/RoutePage.tsx","./src/pages/SnackRadarPage.tsx"],"version":"5.9.3"}
