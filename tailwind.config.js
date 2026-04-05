@@ -1,0 +1,48 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: ['./index.html', './src/**/*.{ts,tsx}'],
+  theme: {
+    extend: {
+      colors: {
+        primary: '#9b3f00',
+        'primary-dim': '#883700',
+        'primary-fixed': '#ff7a2c',
+        'primary-fixed-dim': '#f46800',
+        'primary-container': '#ff7a2c',
+        'on-primary': '#fff0ea',
+        'on-primary-container': '#401600',
+        secondary: '#006859',
+        'secondary-container': '#68fadd',
+        'on-secondary': '#c2ffef',
+        'on-secondary-container': '#005d4f',
+        tertiary: '#652fe7',
+        'tertiary-container': '#b8a3ff',
+        'on-tertiary': '#f7f0ff',
+        'on-tertiary-container': '#370096',
+        surface: '#fff4ef',
+        'surface-bright': '#fff4ef',
+        'surface-dim': '#ffcaa5',
+        'surface-container-lowest': '#ffffff',
+        'surface-container-low': '#ffede4',
+        'surface-container': '#ffe3d1',
+        'surface-container-high': '#ffdcc5',
+        'surface-container-highest': '#ffd4b9',
+        'on-surface': '#4a2506',
+        'on-surface-variant': '#7f512e',
+        outline: '#9e6b46',
+        'outline-variant': '#dba177',
+        error: '#b02500',
+      },
+      fontFamily: {
+        headline: ['"Plus Jakarta Sans"', 'sans-serif'],
+        body: ['"Be Vietnam Pro"', 'sans-serif'],
+      },
+      borderRadius: {
+        DEFAULT: '1rem',
+        lg: '2rem',
+        xl: '3rem',
+      },
+    },
+  },
+  plugins: [],
+};
