@@ -1,7 +1,7 @@
 // Netlify Serverless Function — calls Gemini REST API directly (no SDK).
 // Uses native fetch (Node 18+).
 
-const GEMINI_MODEL = "gemini-2.5-pro";
+const GEMINI_MODEL = "gemini-2.5-flash";
 
 const SYSTEM_INSTRUCTIONS = `Eres el motor de IA de "SmartPaseo AI", app de viajes para familias con adolescentes. Asistes a una familia de 4 (padres María y usuario, adolescentes 12 y 14 años) en Aveiro, Portugal.
 
