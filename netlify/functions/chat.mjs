@@ -90,6 +90,21 @@ export const handler = async (event) => {
     const hasKey = !!apiKey;
     const result = { status: "ok", function: "chat", geminiKeyConfigured: hasKey, model: GEMINI_MODEL };
 
+    // If ?list=1, call ListModels to see what's actually available
+    if (hasKey && event.queryStringParameters?.list === "1") {
+      try {
+        const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+        const listData = await listRes.json();
+        const models = (listData.models || [])
+          .filter(m => m.supportedGenerationMethods?.includes("generateContent"))
+          .map(m => ({ id: m.name?.replace("models/", ""), methods: m.supportedGenerationMethods }));
+        result.availableModels = models;
+      } catch (err) {
+        result.listError = err.message;
+      }
+      return respond(200, result);
+    }
+
     // If ?test=1 is passed, make a real API call to verify everything works
     if (hasKey && event.queryStringParameters?.test === "1") {
       try {
