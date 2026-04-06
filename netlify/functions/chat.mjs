@@ -31,13 +31,17 @@ function respond(statusCode, body) {
 }
 
 async function callGemini(apiKey, contents) {
-  const url = `https://generativelanguage.googleapis.com/v1/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
+
+  // Prepend system instructions as first user message in contents
+  const allContents = [
+    { role: "user", parts: [{ text: `[INSTRUCCIONES DEL SISTEMA]\n${SYSTEM_INSTRUCTIONS}\n[FIN INSTRUCCIONES]\n\nResponde siempre siguiendo el formato indicado arriba.` }] },
+    { role: "model", parts: [{ text: "Entendido. Soy SmartPaseo AI, vuestro concierge familiar en Aveiro. ¡Estoy listo para ayudaros! ¿Qué necesitáis?" }] },
+    ...contents,
+  ];
 
   const body = {
-    contents,
-    systemInstruction: {
-      parts: [{ text: SYSTEM_INSTRUCTIONS }],
-    },
+    contents: allContents,
     generationConfig: {
       temperature: 0.7,
       topP: 0.95,
