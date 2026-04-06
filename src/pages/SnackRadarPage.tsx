@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { sendMessage, hasApiKey } from '../lib/gemini';
+import { sendMessage } from '../lib/gemini';
 
 type Snack = {
   name: string;
@@ -75,17 +75,10 @@ const INITIAL_SNACKS: Snack[] = [
   },
 ];
 
-const CURATED_SUGGESTION = `📍 Ruta / Estado: Centro histórico de Aveiro, cerca del canal.
-
-💡 Sugerencia de la IA: Para los adolescentes, id directos a las **Tripas de Aveiro** — son obleas rellenas de crema (¡no tripas reales!) que se comen caminando. Encontráis en cualquier pastelería del centro. Precio: ~€2. Después, para los padres, un café expreso en el **Café Martinho** con un Pastel de Nata recién salido del horno.
-
-🎮 Misión: ¿Quién adivina el ingrediente secreto de los Ovos Moles? Pista: son de color amarillo y se usan mucho en repostería portuguesa. +30 XP al que lo descubra.
-
-❓ Siguiente Paso: ¿Queréis que os localice la pastelería más cercana con mejor puntuación en Google Maps?`;
-
 export default function SnackRadarPage() {
   const [snacks] = useState<Snack[]>(INITIAL_SNACKS);
   const [aiSuggestion, setAiSuggestion] = useState<string>('');
+  const [aiError, setAiError] = useState<string>('');
   const [loading, setLoading] = useState(false);
 
   function openMaps(query: string) {
@@ -96,30 +89,17 @@ export default function SnackRadarPage() {
   async function askAI() {
     setLoading(true);
     setAiSuggestion('');
+    setAiError('');
     try {
-      if (!hasApiKey()) {
-        // Show curated suggestion when no API key
-        await new Promise((r) => setTimeout(r, 800)); // simulate thinking
-        setAiSuggestion(CURATED_SUGGESTION);
-        return;
-      }
       const text = await sendMessage([
         {
           role: 'user',
-          text: 'Estamos en el centro de Aveiro, cerca del canal y la Praça do Peixe. Los adolescentes tienen hambre. Dame UNA sugerencia de picoteo siguiendo tu formato estricto con emojis.',
+          text: 'Estamos en Aveiro, Portugal haciendo una ruta a pie por el centro histórico. Somos una familia con dos adolescentes. ¿Qué nos recomiendas picar ahora mismo cerca del Canal Central o la Zona Beira-Mar? Dame 2-3 opciones concretas con nombre de sitio, precio aproximado y por qué les gustará a los chicos.',
         },
       ]);
-      setAiSuggestion(text || CURATED_SUGGESTION);
+      setAiSuggestion(text);
     } catch (e: any) {
-      // On API error, show curated suggestion with error notice
-      const msg = e?.message ?? '';
-      if (msg.includes('API') || msg.includes('key') || msg.includes('401') || msg.includes('403') || msg.includes('servidor')) {
-        setAiSuggestion(
-          `⚠️ Para usar el chat IA, necesitas configurar tu API key de Gemini en Netlify.\n\nMientras tanto, aquí tienes una selección curada:\n\n${CURATED_SUGGESTION}`
-        );
-      } else {
-        setAiSuggestion(`⚠️ Error al contactar con la IA: ${msg}\n\nSugerencia sin conexión:\n\n${CURATED_SUGGESTION}`);
-      }
+      setAiError(e?.message ?? 'Error al contactar con la IA. Revisa tu conexión e inténtalo de nuevo.');
     } finally {
       setLoading(false);
     }
@@ -158,6 +138,13 @@ export default function SnackRadarPage() {
         <span className="material-symbols-outlined">auto_awesome</span>
         {loading ? 'Pensando...' : 'Sugerir con IA qué picotear ahora'}
       </button>
+
+      {aiError && (
+        <div className="bg-error/10 border border-error/30 text-error text-sm p-4 rounded-2xl flex items-start gap-3">
+          <span className="material-symbols-outlined text-error shrink-0 mt-0.5">error</span>
+          <p>{aiError}</p>
+        </div>
+      )}
 
       {aiSuggestion && (
         <div className="bg-surface-container-low p-5 rounded-2xl border-l-4 border-secondary whitespace-pre-wrap text-sm leading-relaxed">

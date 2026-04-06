@@ -7,8 +7,8 @@ const TOTAL_STOPS = 7;
 // Static family members (non-route XP)
 const FAMILY_BASE = [
   { name: 'María', xp: 200, color: 'primary' },
-  { name: 'Leo (14)', xp: 150, color: 'tertiary', pro: true },
-  { name: 'Sofía (12)', xp: 100, color: 'tertiary' },
+  { name: 'Edu (14)', xp: 150, color: 'tertiary', pro: true },
+  { name: 'Martín (12)', xp: 100, color: 'tertiary' },
 ];
 
 const CHALLENGES = [
