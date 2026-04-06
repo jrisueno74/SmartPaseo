@@ -14,6 +14,17 @@ export function hasApiKey(): boolean {
   return IS_LOCAL || import.meta.env.PROD;
 }
 
+/**
+ * Gemini requires contents to start with a "user" role message.
+ * The UI welcome message has role "model" — strip leading model messages
+ * before sending to the API.
+ */
+function sanitizeHistory(history: ChatMessage[]): ChatMessage[] {
+  const firstUserIdx = history.findIndex((m) => m.role === 'user');
+  if (firstUserIdx === -1) return history;
+  return history.slice(firstUserIdx);
+}
+
 // --- Netlify proxy path (production) ---
 
 async function sendViaProxy(history: ChatMessage[]): Promise<string> {
@@ -22,9 +33,9 @@ async function sendViaProxy(history: ChatMessage[]): Promise<string> {
     res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: history }),
+      body: JSON.stringify({ messages: sanitizeHistory(history) }),
     });
-  } catch (networkErr) {
+  } catch {
     throw new Error(
       'No se pudo conectar con el servidor. Comprueba tu conexión a internet.'
     );
@@ -59,7 +70,7 @@ function getClient(): GoogleGenAI {
 }
 
 function toGenAIContents(history: ChatMessage[]) {
-  return history.map((m) => {
+  return sanitizeHistory(history).map((m) => {
     const parts: any[] = [{ text: m.text }];
     if (m.image) {
       const match = m.image.match(/^data:(.+);base64,(.+)$/);
@@ -98,7 +109,7 @@ export async function sendMessage(history: ChatMessage[]): Promise<string> {
 export async function* streamMessage(
   history: ChatMessage[]
 ): AsyncGenerator<string> {
-  // Proxy doesn't support streaming — use single response and yield it all at once
+  // Proxy doesn't support streaming — use single response and yield it all
   if (!IS_LOCAL) {
     const text = await sendViaProxy(history);
     yield text;
