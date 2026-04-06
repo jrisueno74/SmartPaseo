@@ -17,17 +17,29 @@ export function hasApiKey(): boolean {
 // --- Netlify proxy path (production) ---
 
 async function sendViaProxy(history: ChatMessage[]): Promise<string> {
-  const res = await fetch('/api/chat', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ messages: history }),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error(err.error || 'Error del servidor');
+  let res: Response;
+  try {
+    res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: history }),
+    });
+  } catch (networkErr) {
+    throw new Error(
+      'No se pudo conectar con el servidor. Comprueba tu conexión a internet.'
+    );
   }
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+    throw new Error(err.error || `Error del servidor (${res.status})`);
+  }
+
   const data = await res.json();
-  return data.text ?? '';
+  if (!data.text) {
+    throw new Error('La IA devolvió una respuesta vacía. Intenta de nuevo.');
+  }
+  return data.text;
 }
 
 // --- Direct Gemini SDK path (local dev) ---
@@ -64,7 +76,7 @@ function toGenAIContents(history: ChatMessage[]) {
 async function sendDirect(history: ChatMessage[]): Promise<string> {
   const ai = getClient();
   const response = await ai.models.generateContent({
-    model: 'gemini-2.0-flash-exp',
+    model: 'gemini-2.0-flash',
     contents: toGenAIContents(history),
     config: {
       systemInstruction: SMARTPASEO_SYSTEM_INSTRUCTIONS,
@@ -95,7 +107,7 @@ export async function* streamMessage(
 
   const ai = getClient();
   const stream = await ai.models.generateContentStream({
-    model: 'gemini-2.0-flash-exp',
+    model: 'gemini-2.0-flash',
     contents: toGenAIContents(history),
     config: {
       systemInstruction: SMARTPASEO_SYSTEM_INSTRUCTIONS,

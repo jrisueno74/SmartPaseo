@@ -1,4 +1,4 @@
-const { GoogleGenAI } = require("@google/genai");
+import { GoogleGenAI } from "@google/genai";
 
 const SYSTEM_INSTRUCTIONS = `Rol y Propósito: Eres el motor de inteligencia artificial de "SmartPaseo AI", una aplicación móvil de asistencia y planificación de viajes diseñada específicamente para la supervivencia y el disfrute de familias con adolescentes.
 
@@ -38,43 +38,66 @@ Formato Estricto de Respuesta: Usa emojis y párrafos muy cortos:
 🎮 Misión / Reto: (Solo si cuadra).
 ❓ Siguiente Paso: (Termina siempre con una pregunta corta).`;
 
-exports.handler = async (event) => {
-  const headers = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "Content-Type",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Content-Type": "application/json",
-  };
+const HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Content-Type": "application/json",
+};
 
+export const handler = async (event) => {
   if (event.httpMethod === "OPTIONS") {
-    return { statusCode: 204, headers, body: "" };
+    return { statusCode: 204, headers: HEADERS, body: "" };
   }
 
   if (event.httpMethod !== "POST") {
-    return { statusCode: 405, headers, body: JSON.stringify({ error: "Method not allowed" }) };
+    return {
+      statusCode: 405,
+      headers: HEADERS,
+      body: JSON.stringify({ error: "Method not allowed" }),
+    };
   }
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return {
       statusCode: 500,
-      headers,
-      body: JSON.stringify({ error: "GEMINI_API_KEY not configured in Netlify environment variables" }),
+      headers: HEADERS,
+      body: JSON.stringify({
+        error: "GEMINI_API_KEY no configurada. Ve a Netlify > Site settings > Environment variables y añade GEMINI_API_KEY.",
+      }),
+    };
+  }
+
+  let messages;
+  try {
+    const parsed = JSON.parse(event.body || "{}");
+    messages = parsed.messages;
+  } catch {
+    return {
+      statusCode: 400,
+      headers: HEADERS,
+      body: JSON.stringify({ error: "JSON inválido en el body" }),
+    };
+  }
+
+  if (!Array.isArray(messages) || messages.length === 0) {
+    return {
+      statusCode: 400,
+      headers: HEADERS,
+      body: JSON.stringify({ error: "Falta el array messages" }),
     };
   }
 
   try {
-    const { messages } = JSON.parse(event.body || "{}");
-    if (!messages || !Array.isArray(messages)) {
-      return { statusCode: 400, headers, body: JSON.stringify({ error: "Missing messages array" }) };
-    }
-
     const contents = messages.map((m) => {
-      const parts = [{ text: m.text }];
+      const parts = [{ text: m.text || "" }];
       if (m.image) {
         const match = m.image.match(/^data:(.+);base64,(.+)$/);
         if (match) {
-          parts.push({ inlineData: { mimeType: match[1], data: match[2] } });
+          parts.push({
+            inlineData: { mimeType: match[1], data: match[2] },
+          });
         }
       }
       return { role: m.role, parts };
@@ -82,7 +105,7 @@ exports.handler = async (event) => {
 
     const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash-exp",
+      model: "gemini-2.0-flash",
       contents,
       config: {
         systemInstruction: SYSTEM_INSTRUCTIONS,
@@ -92,17 +115,24 @@ exports.handler = async (event) => {
       },
     });
 
+    const text = response.text || "";
     return {
       statusCode: 200,
-      headers,
-      body: JSON.stringify({ text: response.text || "" }),
+      headers: HEADERS,
+      body: JSON.stringify({ text }),
     };
   } catch (err) {
     console.error("Gemini proxy error:", err);
+    const message =
+      err?.message?.includes("API key")
+        ? "API key inválida. Revisa GEMINI_API_KEY en Netlify."
+        : err?.message?.includes("not found")
+          ? "Modelo no disponible. Contacta soporte."
+          : `Error de Gemini: ${err?.message || "desconocido"}`;
     return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ error: err.message || "Internal server error" }),
+      statusCode: 502,
+      headers: HEADERS,
+      body: JSON.stringify({ error: message }),
     };
   }
 };
