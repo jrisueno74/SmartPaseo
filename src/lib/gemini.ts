@@ -87,7 +87,7 @@ function toGenAIContents(history: ChatMessage[]) {
 async function sendDirect(history: ChatMessage[]): Promise<string> {
   const ai = getClient();
   const response = await ai.models.generateContent({
-    model: 'gemini-2.0-flash-001',
+    model: 'gemini-2.5-pro-exp-03-25',
     contents: toGenAIContents(history),
     config: {
       systemInstruction: SMARTPASEO_SYSTEM_INSTRUCTIONS,
@@ -118,7 +118,7 @@ export async function* streamMessage(
 
   const ai = getClient();
   const stream = await ai.models.generateContentStream({
-    model: 'gemini-2.0-flash-001',
+    model: 'gemini-2.5-pro-exp-03-25',
     contents: toGenAIContents(history),
     config: {
       systemInstruction: SMARTPASEO_SYSTEM_INSTRUCTIONS,
