@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { BOT_ID, ChatMessage, hasApiKey, streamMessage } from '../lib/gemini';
+import { ChatMessage, hasApiKey, streamMessage } from '../lib/gemini';
 
 const WELCOME: ChatMessage = {
   role: 'model',
-  text: `📍 Ruta / Estado: Aveiro, Portugal — listos para empezar.\n\n💡 Sugerencia de la IA: Cuéntame dónde os alojáis y a qué hora coméis, y os armo la ruta perfecta para la familia.\n\n❓ Siguiente Paso: ¿Dónde está vuestro hotel hoy?`,
+  text: `📍 Ruta / Estado: Aveiro, Portugal — Hotel Afonso V. Ruta de mañana cargada: Catedral, Forum, Moliceiro, Beira Mar y Praça do Peixe.\n\n💡 Sugerencia de la IA: Tenéis todo listo para una mañana redonda. Si necesitáis un cambio de planes, un snack de emergencia o que os explique algo que veáis, ¡preguntadme!\n\n❓ Siguiente Paso: ¿Queréis que os prepare algún reto para los chicos mientras paseáis?`,
 };
 
 function fileToDataUrl(file: File): Promise<string> {
@@ -67,10 +67,10 @@ export default function ChatPage() {
     <div className="flex flex-col h-[calc(100vh-10rem)] px-4">
       <div className="flex items-center justify-between py-3">
         <div>
+          <h2 className="font-headline font-extrabold text-2xl text-primary">SmartPaseo AI</h2>
           <p className="text-xs font-bold uppercase tracking-widest text-on-surface-variant">
-            Bot: {BOT_ID}
+            Kinetic Concierge
           </p>
-          <h2 className="font-headline font-extrabold text-2xl text-primary">Kinetic Concierge</h2>
         </div>
         {!hasApiKey() && (
           <span className="text-[10px] font-bold text-error bg-error/10 px-2 py-1 rounded-full">

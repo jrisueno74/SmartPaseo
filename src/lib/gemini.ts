@@ -2,7 +2,7 @@ import { GoogleGenAI } from '@google/genai';
 import { SMARTPASEO_SYSTEM_INSTRUCTIONS } from './systemInstructions';
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
-export const BOT_ID = (import.meta.env.VITE_BOT_ID as string) || 'jules';
+const IS_LOCAL = !!API_KEY;
 
 export type ChatMessage = {
   role: 'user' | 'model';
@@ -10,22 +10,40 @@ export type ChatMessage = {
   image?: string; // base64 data URL
 };
 
+export function hasApiKey(): boolean {
+  return IS_LOCAL || import.meta.env.PROD;
+}
+
+// --- Netlify proxy path (production) ---
+
+async function sendViaProxy(history: ChatMessage[]): Promise<string> {
+  const res = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages: history }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error || 'Error del servidor');
+  }
+  const data = await res.json();
+  return data.text ?? '';
+}
+
+// --- Direct Gemini SDK path (local dev) ---
+
 let aiClient: GoogleGenAI | null = null;
 
 function getClient(): GoogleGenAI {
   if (!API_KEY) {
     throw new Error(
-      'Missing VITE_GEMINI_API_KEY. Copy .env.example to .env and set your Google AI Studio key.'
+      'Missing VITE_GEMINI_API_KEY. Copy .env.example to .env and set your key.'
     );
   }
   if (!aiClient) {
     aiClient = new GoogleGenAI({ apiKey: API_KEY });
   }
   return aiClient;
-}
-
-export function hasApiKey(): boolean {
-  return !!API_KEY;
 }
 
 function toGenAIContents(history: ChatMessage[]) {
@@ -43,7 +61,7 @@ function toGenAIContents(history: ChatMessage[]) {
   });
 }
 
-export async function sendMessage(history: ChatMessage[]): Promise<string> {
+async function sendDirect(history: ChatMessage[]): Promise<string> {
   const ai = getClient();
   const response = await ai.models.generateContent({
     model: 'gemini-2.0-flash-exp',
@@ -58,9 +76,23 @@ export async function sendMessage(history: ChatMessage[]): Promise<string> {
   return response.text ?? '';
 }
 
+// --- Public API ---
+
+export async function sendMessage(history: ChatMessage[]): Promise<string> {
+  if (IS_LOCAL) return sendDirect(history);
+  return sendViaProxy(history);
+}
+
 export async function* streamMessage(
   history: ChatMessage[]
 ): AsyncGenerator<string> {
+  // Proxy doesn't support streaming — use single response and yield it all at once
+  if (!IS_LOCAL) {
+    const text = await sendViaProxy(history);
+    yield text;
+    return;
+  }
+
   const ai = getClient();
   const stream = await ai.models.generateContentStream({
     model: 'gemini-2.0-flash-exp',

@@ -26,7 +26,8 @@ Get an API key at https://aistudio.google.com/apikey
 - **Profile** — XP familiar, retos pendientes, vitrina de trofeos, canje de puntos.
 
 ## Environment
-| Var | Default | Purpose |
+| Var | Where | Purpose |
 |---|---|---|
-| `VITE_GEMINI_API_KEY` | — | Google AI Studio key |
-| `VITE_BOT_ID` | `jules` | Identificador del bot |
+| `VITE_GEMINI_API_KEY` | `.env` or Netlify env vars | Google AI Studio key |
+
+> **Note:** On Netlify, also add `GEMINI_API_KEY` (without VITE_ prefix) for the serverless proxy function. The `VITE_` prefixed key is only needed for local dev.
