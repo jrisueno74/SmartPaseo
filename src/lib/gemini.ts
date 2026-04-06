@@ -10,6 +10,13 @@ export type ChatMessage = {
   image?: string; // base64 data URL
 };
 
+/**
+ * Returns true only when we actually have a way to call Gemini:
+ * - Local dev: VITE_GEMINI_API_KEY is set
+ * - Production (Netlify): always attempt via proxy; the proxy itself
+ *   will return a meaningful error if GEMINI_API_KEY is not set server-side.
+ *   We return true here so the UI doesn't permanently show "NO API KEY".
+ */
 export function hasApiKey(): boolean {
   return IS_LOCAL || import.meta.env.PROD;
 }

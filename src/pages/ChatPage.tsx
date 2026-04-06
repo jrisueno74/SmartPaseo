@@ -49,7 +49,16 @@ export default function ChatPage() {
         });
       }
     } catch (e: any) {
-      setError(e?.message ?? 'Error al contactar con Gemini');
+      const rawMsg: string = e?.message ?? '';
+      let friendlyMsg = rawMsg;
+      if (rawMsg.includes('GEMINI_API_KEY') || rawMsg.includes('401') || rawMsg.includes('403') || rawMsg.includes('API key')) {
+        friendlyMsg = 'Para usar el chat IA, necesitas configurar tu API key de Gemini en Netlify. Ve a Site settings → Environment variables y añade GEMINI_API_KEY.';
+      } else if (rawMsg.includes('conectar') || rawMsg.includes('fetch') || rawMsg.includes('network')) {
+        friendlyMsg = 'No se pudo conectar con el servidor de IA. Comprueba tu conexión a internet e inténtalo de nuevo.';
+      } else if (!rawMsg) {
+        friendlyMsg = 'Error desconocido al contactar con Gemini. Inténtalo de nuevo.';
+      }
+      setError(friendlyMsg);
       setMessages((prev) => prev.slice(0, -1));
     } finally {
       setLoading(false);
